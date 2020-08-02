@@ -1,5 +1,6 @@
-use crate::runtime::{yield_now, Arc, Mutex};
-use crate::BatchFn;
+use super::BatchFn;
+use std::sync::{Arc, Mutex};
+use std::thread::yield_now;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -83,8 +84,8 @@ where
         self.max_batch_size
     }
 
-    pub async fn load(&self, key: K) -> V {
-        let mut state = self.state.lock().await;
+    pub fn load(&self, key: K) -> V {
+        let mut state = self.state.lock().unwrap();
         let request_id = state.next_request_id();
         state.pending.insert(request_id, key);
         if state.pending.len() >= self.max_batch_size {
@@ -95,8 +96,8 @@ where
                 .collect::<HashSet<K>>()
                 .into_iter()
                 .collect();
-            let load_fn = self.load_fn.lock().await;
-            let load_ret = load_fn.load(keys.as_ref()).await;
+            let load_fn = self.load_fn.lock().unwrap();
+            let load_ret = load_fn.load(keys.as_ref());
             drop(load_fn);
             for (request_id, key) in batch.into_iter() {
                 state.completed.insert(
@@ -114,11 +115,11 @@ where
         // yield for other load to append request
         let mut i = 0;
         while i < self.yield_count {
-            yield_now().await;
+            yield_now();
             i += 1;
         }
 
-        let mut state = self.state.lock().await;
+        let mut state = self.state.lock().unwrap();
 
         if state.completed.get(&request_id).is_none() {
             let batch = state.pending.drain().collect::<HashMap<usize, K>>();
@@ -129,8 +130,8 @@ where
                     .collect::<HashSet<K>>()
                     .into_iter()
                     .collect();
-                let load_fn = self.load_fn.lock().await;
-                let load_ret = load_fn.load(keys.as_ref()).await;
+                let load_fn = self.load_fn.lock().unwrap();
+                let load_ret = load_fn.load(keys.as_ref());
                 drop(load_fn);
                 for (request_id, key) in batch.into_iter() {
                     state.completed.insert(
@@ -146,8 +147,8 @@ where
         state.completed.remove(&request_id).expect("completed")
     }
 
-    pub async fn load_many(&self, keys: Vec<K>) -> HashMap<K, V> {
-        let mut state = self.state.lock().await;
+    pub fn load_many(&self, keys: Vec<K>) -> HashMap<K, V> {
+        let mut state = self.state.lock().unwrap();
         let mut ret = HashMap::new();
         let mut requests = Vec::new();
         for key in keys.into_iter() {
@@ -162,8 +163,8 @@ where
                     .collect::<HashSet<K>>()
                     .into_iter()
                     .collect();
-                let load_fn = self.load_fn.lock().await;
-                let load_ret = load_fn.load(keys.as_ref()).await;
+                let load_fn = self.load_fn.lock().unwrap();
+                let load_ret = load_fn.load(keys.as_ref());
                 drop(load_fn);
                 for (request_id, key) in batch.into_iter() {
                     state.completed.insert(
@@ -182,11 +183,11 @@ where
         // yield for other load to append request
         let mut i = 0;
         while i < self.yield_count {
-            yield_now().await;
+            yield_now();
             i += 1;
         }
 
-        let mut state = self.state.lock().await;
+        let mut state = self.state.lock().unwrap();
 
         let mut rest = Vec::new();
         for (request_id, key) in requests.into_iter() {
@@ -206,8 +207,8 @@ where
                     .collect::<HashSet<K>>()
                     .into_iter()
                     .collect();
-                let load_fn = self.load_fn.lock().await;
-                let load_ret = load_fn.load(keys.as_ref()).await;
+                let load_fn = self.load_fn.lock().unwrap();
+                let load_ret = load_fn.load(keys.as_ref());
                 drop(load_fn);
                 for (request_id, key) in batch.into_iter() {
                     state.completed.insert(

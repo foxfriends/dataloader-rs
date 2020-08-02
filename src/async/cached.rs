@@ -1,5 +1,5 @@
-use crate::runtime::{yield_now, Arc, Mutex};
-use crate::BatchFn;
+use super::runtime::{yield_now, Arc, Mutex};
+use super::AsyncBatchFn;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use std::hash::{BuildHasher, Hash};
@@ -65,7 +65,7 @@ pub struct Loader<K, V, F, C = HashMap<K, V>>
 where
     K: Eq + Hash + Clone,
     V: Clone,
-    F: BatchFn<K, V>,
+    F: AsyncBatchFn<K, V>,
     C: Cache<Key = K, Val = V>,
 {
     state: Arc<Mutex<State<K, V, C>>>,
@@ -78,7 +78,7 @@ impl<K, V, F, C> Clone for Loader<K, V, F, C>
 where
     K: Eq + Hash + Clone,
     V: Clone,
-    F: BatchFn<K, V>,
+    F: AsyncBatchFn<K, V>,
     C: Cache<Key = K, Val = V>,
 {
     fn clone(&self) -> Self {
@@ -96,7 +96,7 @@ impl<K, V, F> Loader<K, V, F, HashMap<K, V>>
 where
     K: Eq + Hash + Clone + Debug,
     V: Clone,
-    F: BatchFn<K, V>,
+    F: AsyncBatchFn<K, V>,
 {
     pub fn new(load_fn: F) -> Loader<K, V, F, HashMap<K, V>> {
         Loader::with_cache(load_fn, HashMap::new())
@@ -107,7 +107,7 @@ impl<K, V, F, C> Loader<K, V, F, C>
 where
     K: Eq + Hash + Clone + Debug,
     V: Clone,
-    F: BatchFn<K, V>,
+    F: AsyncBatchFn<K, V>,
     C: Cache<Key = K, Val = V>,
 {
     pub fn with_cache(load_fn: F, cache: C) -> Loader<K, V, F, C> {

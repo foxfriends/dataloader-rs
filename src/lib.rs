@@ -1,6 +1,5 @@
-mod batch_fn;
-pub mod cached;
-pub mod non_cached;
-mod runtime;
+#[cfg(feature = "sync")]
+pub mod sync;
 
-pub use batch_fn::BatchFn;
+#[cfg(feature = "async")]
+pub mod r#async;

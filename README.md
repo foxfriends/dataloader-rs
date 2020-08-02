@@ -3,23 +3,29 @@
 ![Rust](https://github.com/cksac/dataloader-rs/workflows/Rust/badge.svg)
 [![Crates.io](https://img.shields.io/crates/v/dataloader.svg)](https://crates.io/crates/dataloader)
 
-Rust implementation of [Facebook's DataLoader](https://github.com/facebook/dataloader) using async-await.
+Rust implementation of [Facebook's DataLoader](https://github.com/facebook/dataloader).
 
 [Documentation](https://docs.rs/dataloader)
 
 ## Features
+
 * [x] Batching load requests with caching
 * [x] Batching load requests without caching
+* [x] Blocking and async interfaces
 
 ## Usage
-### Switching runtime, by using cargo features
-- `runtime-async-std` (default), to use the [async-std](https://async.rs) runtime
-    - dataloader = "0.12"
-- `runtime-tokio` to use the [Tokio](https://tokio.rs) runtime
-    - dataloader = { version = "0.12", default-features = false, features = ["runtime-tokio"]}
 
+### Switching runtime, by using Cargo features
+
+- `async` to include the async interface. To further customize the async runtime the following features may also be used:
+    - `runtime-async-std` (default), to use the [async-std](https://async.rs) runtime
+        - dataloader = "0.12"
+    - `runtime-tokio` to use the [Tokio](https://tokio.rs) runtime
+        - dataloader = { version = "0.12", default-features = false, features = ["runtime-tokio"]}
+- `sync` to include the blocking interface
 
 ### Add to your `Cargo.toml`:
+
 ```toml
 [dependencies]
 dataloader = "0.12"
@@ -28,6 +34,7 @@ async-trait = "0.1"
 ```
 
 ### Example:
+
 ```rust
 use async_trait::async_trait;
 use dataloader::cached::Loader;
